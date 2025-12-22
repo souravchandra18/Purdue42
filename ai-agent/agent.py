@@ -7,7 +7,18 @@ from llm import call_llm
 
 def main():
     repo = os.getenv("GITHUB_WORKSPACE", ".")
-    run_semgrep = os.getenv("INPUT_RUN_SEMGREP", "true") == "true"
+    run_semgrep = os.getenv("INPUT_RUN_SEMGREP", "true").lower() == "true"
+
+    event_name = os.getenv("GITHUB_EVENT_NAME")
+    input_mode = os.getenv("INPUT_MODE")
+
+    if input_mode:
+        mode = input_mode
+    elif event_name == "pull_request":
+        mode = "pr"
+    else:
+        mode = "real"
+
     pr_number = os.getenv("PR_NUMBER")
 
     languages = detect(repo)
@@ -23,6 +34,7 @@ Return STRICT JSON:
   "recommendations": []
 }}
 
+Mode: {mode}
 Detected languages: {languages}
 
 Analyzer results:
@@ -34,6 +46,8 @@ Analyzer results:
     comment = f"""
 ### 🤖 AI & GenOps Guardian Report
 
+**Mode:** `{mode}`
+
 **Summary**
 {result.get("summary")}
 
@@ -44,7 +58,7 @@ Analyzer results:
 {json.dumps(result.get("recommendations", []), indent=2)}
 """
 
-    if pr_number:
+    if mode == "pr" and pr_number:
         gh = Github(os.getenv("GITHUB_TOKEN"))
         repo_obj = gh.get_repo(os.getenv("GITHUB_REPOSITORY"))
         repo_obj.get_pull(int(pr_number)).create_issue_comment(comment)
@@ -52,6 +66,8 @@ Analyzer results:
         os.makedirs("analysis_results", exist_ok=True)
         with open("analysis_results/report.json", "w") as f:
             json.dump(result, f, indent=2)
+
+        print("Analysis written to analysis_results/")
 
 if __name__ == "__main__":
     main()
