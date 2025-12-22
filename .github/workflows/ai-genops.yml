@@ -56,7 +56,14 @@ jobs:
       - name: Install Python analyzers
         run: |
           pip install --upgrade pip
-          pip install ruff pylint bandit semgrep checkov tfsec openai PyGithub
+          pip install -r ai-agent/requirements.txt
+          pip install ruff pylint bandit semgrep checkov openai PyGithub
+
+      #------------tfsec---------------
+      - name: Install tfsec
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          echo "$HOME/.tfsec/bin" >> $GITHUB_PATH
 
       # ---------- Node ----------
       - name: Install ESLint
