@@ -122,7 +122,7 @@ jobs:
       - name: Run AI GenOps Guardian
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.VAULT_TOKEN }}
           INPUT_RUN_SEMGREP: "true"
           INPUT_MODE: ${{ github.event.inputs.mode }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
