@@ -5,6 +5,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run mode (pr, real, demo)"
+        required: true
+        default: "real"
 
 permissions:
   contents: read
@@ -56,7 +61,14 @@ jobs:
       - name: Install Python analyzers
         run: |
           pip install --upgrade pip
-          pip install ruff pylint bandit semgrep checkov tfsec openai PyGithub
+          pip install -r ai-agent/requirements.txt
+          pip install ruff pylint bandit semgrep checkov openai PyGithub
+
+      # ---------- tfsec ----------
+      - name: Install tfsec
+        run: |
+          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          echo "$HOME/.tfsec/bin" >> $GITHUB_PATH
 
       # ---------- Node ----------
       - name: Install ESLint
@@ -112,6 +124,15 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.VAULT_TOKEN }}
           INPUT_RUN_SEMGREP: "true"
+          INPUT_MODE: ${{ github.event.inputs.mode }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python ai-agent/agent.py
+
+      # ---------- Artifacts ----------
+      - name: Upload analysis results
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: analysis-results
+          path: analysis_results/
