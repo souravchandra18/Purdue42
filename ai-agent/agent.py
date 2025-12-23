@@ -44,7 +44,7 @@ Analyzer results:
     result = call_llm(prompt)
 
     comment = f"""
-### 🤖 AI & GenOps Guardian Report
+### AI & GenOps Guardian Report
 
 **Mode:** `{mode}`
 
