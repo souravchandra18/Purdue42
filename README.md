@@ -1,95 +1,205 @@
-# genops-ai-agent
+# 🤖 AI & GenOps Guardian
 
-#  Unified AI & GenOps Guardian CI
+**AI & GenOps Guardian** is a multi-language **DevSecOps automation framework** that runs inside **GitHub Actions** to perform **static analysis, security scanning, and AI-assisted code review** across application code, containers, and infrastructure-as-code.
 
-This repository includes a **GitHub Actions workflow** that runs two AI-powered reviewers on every Pull Request or manual workflow run:
-
----
-
-##  AI Universal Agent
-- Detects languages and tools in the repository
-- Runs static analyzers:
-  - Python → `ruff`, `pylint`, `bandit`
-  - JavaScript → `eslint`
-  - Java → `spotbugs`, `pmd`, `checkstyle`
-  - Go → `govet`, `staticcheck`
-  - Ruby → `rubocop`
-  - PHP → `phpcs`, `psalm`
-  - .NET → `roslyn`
-  - Docker → `trivy`
-  - Terraform → `checkov`, `tfsec`
-  - Kubernetes → `kube-linter`
-  - Semgrep (multi-language)
-- Summarizes findings with an LLM (OpenAI)
-- Posts a PR comment with both a short summary and a detailed report
+It combines **best-in-class open-source analyzers** with **LLM-based reasoning** to provide actionable insights directly in Pull Requests or as build artifacts.
 
 ---
 
-##  GenOps Guardian
-- Collects repository or PR context (configs, diffs, commits)
-- Uses OpenAI to calculate a **risk score (0–100)**
-- Flags potential pipeline failures, security issues, and optimization opportunities
-- Posts a PR comment with risk level and analysis
+## 🚀 Key Capabilities
+
+* 🔍 **Multi-language static analysis**
+* 🔐 **Security & IaC scanning**
+* 🤖 **AI-powered risk summarization**
+* 💬 **Automatic PR comments**
+* 📦 **Artifact reports for non-PR runs**
+* 🧠 **Rate-limit safe LLM integration**
+* 🧱 **CI-safe (never fails due to AI)**
 
 ---
 
-##  Workflow Modes
+## 🧰 Supported Languages & Tools
 
-### Pull Request Mode
-- Triggered automatically on PR events (`opened`, `synchronize`, `reopened`)
-- Posts **two comments** directly on the PR:
-  - Repository Health Summary + Detailed Report
-  - Risk Score + Issues + Analysis
-
-### Real Mode
-- Triggered manually via `workflow_dispatch`
-- Runs both agents but **no PR comments are posted**
-- Instead, results are written to `analysis_results/`:
-  - `universal_agent.txt` → full summary + detailed analyzer report
-  - `genops_guardian.json` → structured risk analysis JSON
-- These files are uploaded as a **workflow artifact** named `analysis-results`  
-  → Downloadable from the **Actions run summary** in GitHub
-
----
-
-##  Secrets Required
-- `OPENAI_API_KEY` → for AI Universal Agent & for GenOps Guardian
-- `GITHUB_TOKEN` → automatically provided by GitHub Actions
+| Language / Area          | Tools Used                           |
+| ------------------------ | ------------------------------------ |
+| **Python**               | `ruff`, `pylint`, `bandit`           |
+| **JavaScript / Node.js** | `eslint`                             |
+| **Java**                 | `spotbugs`, `pmd`, `checkstyle`      |
+| **Go**                   | `go vet`, `staticcheck`              |
+| **Ruby**                 | `rubocop`                            |
+| **PHP**                  | `phpcs`, `psalm`                     |
+| **.NET**                 | Roslyn (`dotnet build /warnaserror`) |
+| **Docker / Containers**  | `trivy`                              |
+| **Terraform**            | `checkov`, `tfsec`                   |
+| **Kubernetes YAML**      | `kube-linter`                        |
+| **Multi-language**       | `semgrep`                            |
 
 ---
 
-##  Repository Structure
+## 🏗️ Architecture Overview
 
-.github/ workflows/ ai-genops.yml        # Unified workflow
-ai-agent/ agent.py               # Unified entrypoint (runs both agents) analyzers.py           # Language/tool detection + analyzers llm.py                 # LLM call wrapper requirements.txt       
-ai-agent/ requirements.txt       # Dependencies for AI Agent & GenOps Guardian (aligned)
-
+```text
+┌────────────┐
+│ GitHub PR  │
+└─────┬──────┘
+      │
+      ▼
+┌────────────────────┐
+│ GitHub Actions CI  │
+└─────┬──────────────┘
+      │
+      ▼
+┌──────────────────────────┐
+│ Language Detection       │
+│ (ai-agent/analyzers.py)  │
+└─────┬────────────────────┘
+      │
+      ▼
+┌──────────────────────────┐
+│ Static & Security Scans  │
+│ (All tools run locally) │
+└─────┬────────────────────┘
+      │
+      ▼
+┌──────────────────────────┐
+│ AI Reasoning Layer       │
+│ (OpenAI – rate-safe)     │
+└─────┬────────────────────┘
+      │
+      ▼
+┌───────────────┐   ┌────────────────┐
+│ PR Comment    │   │ Artifacts JSON │
+│ (PR mode)     │   │ (real/demo)    │
+└───────────────┘   └────────────────┘
+```
 
 ---
 
-##  Contributor Experience
-Every PR will receive **two complementary AI reviews**:
-- **Code Quality & Security Analysis** (Universal Agent)
-- **Risk Scoring & CI/CD Health Check** (GenOps Guardian)
+## ⚙️ Execution Modes
 
-This ensures contributors get actionable feedback on both **code-level issues** and **pipeline-level risks**.
+AI & GenOps Guardian supports **three execution modes**:
 
----
+| Mode   | Trigger            | Behavior                           |
+| ------ | ------------------ | ---------------------------------- |
+| `pr`   | Pull Request       | Posts results as PR comments       |
+| `real` | Manual / scheduled | Saves JSON reports as artifacts    |
+| `demo` | Manual             | Same as `real` (no PR interaction) |
 
-##  Downloading Reports in Real Mode
-1. Go to the **Actions tab** in GitHub.
-2. Select the workflow run.
-3. Scroll to the **Artifacts** section.
-4. Download the `analysis-results` archive.
-5. Inside you’ll find:
-   - `universal_agent.txt`
-   - `genops_guardian.json`
+Mode selection priority:
+
+1. `workflow_dispatch` input
+2. `pull_request` event → `pr`
+3. Default → `real`
 
 ---
 
-##  Going to execute
-- Ensure secrets are configured in your repository:
-  - `OPENAI_API_KEY`
-- Open a Pull Request → AI reviews will appear as comments.
-- Or trigger manually via **Actions → Run workflow** → choose `real` mode → download artifact for full report.
+## 🧪 Example PR Comment
 
+```markdown
+### 🤖 AI & GenOps Guardian Report
+
+Mode: pr
+
+Summary:
+Potential security misconfigurations detected in Terraform
+and inconsistent linting in Python modules.
+
+Critical Issues:
+- Terraform S3 bucket allows public access
+- Hardcoded secret detected by Semgrep
+
+Recommendations:
+- Enable S3 Block Public Access
+- Move secrets to GitHub Secrets or Vault
+```
+
+---
+
+## 🛠️ Repository Structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── ai-genops.yml
+│
+├── ai-agent/
+│   ├── agent.py        # Orchestrator (PR vs real mode)
+│   ├── analyzers.py    # Tool execution & language detection
+│   ├── llm.py          # LLM integration (rate-limit safe)
+│   └── requirements.txt
+│
+└── analysis_results/   # Generated in real/demo mode
+```
+
+---
+
+## 🔐 Required Secrets
+
+Add the following secrets in your repository settings:
+
+| Secret Name      | Description                     |
+| ---------------- | ------------------------------- |
+| `OPENAI_API_KEY` | OpenAI API key                  |
+| `GITHUB_TOKEN`   | Auto-provided by GitHub Actions |
+
+> ⚠️ **Do not** hardcode tokens or secrets in code.
+
+---
+
+## 🧠 LLM Safety & Reliability
+
+The AI layer is **CI-safe by design**:
+
+* 🧮 Prompt size capped to avoid token explosion
+* 🔁 Automatic retry with exponential backoff
+* ✂️ Analyzer output summarization
+* 🧱 Hard fallback when rate-limited
+* ❌ Pipeline **never fails due to AI**
+
+If OpenAI is unavailable, **static analysis still completes**.
+
+---
+
+## 📦 Outputs
+
+### PR Mode
+
+* Comments posted directly on the Pull Request
+
+### Real / Demo Mode
+
+* `analysis_results/report.json`
+* Uploaded as GitHub Action artifacts
+
+---
+
+## 🧩 Extensibility
+
+Designed for easy extension:
+
+* Add SARIF output
+* Add policy gates (fail on Critical)
+* Add diff-aware analysis (BASE vs HEAD)
+* Plug in Bedrock / Azure OpenAI
+* Split LLM analysis per language
+
+---
+
+## 🏆 Use Cases
+
+* Secure CI/CD pipelines
+* Enterprise DevSecOps automation
+* Code quality enforcement
+* IaC security governance
+* AI-assisted code reviews
+
+---
+
+## 👤 Author
+
+**Sourav Chandra**
+DevSecOps • GenAI • Platform Engineering
+
+---
+Just tell me the next enhancement 🚀
